@@ -1,49 +1,44 @@
-const mongoose=require('mongoose');
-const Userschema=require('../models/user');
-const bcrypt=require('bcryptjs');
-const jwt=require('jsonwebtoken');
-const cookie=require
+const mongoose = require("mongoose");
+const Userschema = require("../models/user");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const cookie = require;
 
-const usersignup=async (req,res)=>{
-  try{
-   
-    const {fullname,email,phone_Number,password,role}=req.body;
-    if(!fullname||!email||!phone_Number||!password||!role){
+const usersignup = async (req, res) => {
+  try {
+    const { fullname, email, phone_Number, password, role } = req.body;
+    if (!fullname || !email || !phone_Number || !password || !role) {
       return res.status(400).json({
-        message:"There Is SomeThing Missing ..",
-        success:false,
-      })
+        message: "There Is SomeThing Missing ..",
+        success: false,
+      });
     }
 
-    const Existuser=await Userschema.findOne({email});
+    const Existuser = await Userschema.findOne({ email });
 
-    if(Existuser){
+    if (Existuser) {
       return res.status(400).json({
-        message:"Emial Already Exist",
-        success:false,
+        message: "Emial Already Exist",
+        success: false,
       });
-    };
+    }
 
+    const hashpassword = await bcrypt.hash(password, 10);
 
-    const hashpassword=await bcrypt.hash(password,10);
-
-    const newUser=await Userschema.create({
-      fullname:fullname,
-      email:email,
-      password:hashpassword,
-      phone_Number:phone_Number,
-      role:role
-    })
-    return res.status(200).json({message:"Account Created Succesfully ..",
-    success:true
+    const newUser = await Userschema.create({
+      fullname: fullname,
+      email: email,
+      password: hashpassword,
+      phone_Number: phone_Number,
+      role: role,
     });
-
-
-  }catch(error){
-    console.log(`this is the error from usercontroller`,error.message);
-
+    return res
+      .status(200)
+      .json({ message: "Account Created Succesfully ..", success: true });
+  } catch (error) {
+    console.log(`this is the error from usercontroller`, error.message);
   }
-}
+};
 
 const userlogin = async (req, res) => {
   try {
@@ -83,11 +78,9 @@ const userlogin = async (req, res) => {
 
     user.password = undefined;
 
-    const token = jwt.sign(
-      { userid: user._id },
-      process.env.SECRET_KEY,
-      { expiresIn: "2d" }
-    );
+    const token = jwt.sign({ userid: user._id }, process.env.SECRET_KEY, {
+      expiresIn: "2d",
+    });
 
     const userdata = {
       userid: user._id,
@@ -108,7 +101,6 @@ const userlogin = async (req, res) => {
         user: userdata,
         success: true,
       });
-
   } catch (error) {
     console.log("Login error:", error.message);
     return res.status(400).json({
@@ -117,24 +109,20 @@ const userlogin = async (req, res) => {
   }
 };
 
-
-
-const userlogout=async (req,res) =>{
-  try{
-    return res.status(200).cookie("token","",{maxAge:0}).json({
-      message:"You Logout Successfull",
-      success:true
-    })
-
-  }catch(error){
+const userlogout = async (req, res) => {
+  try {
+    return res.status(200).cookie("token", "", { maxAge: 0 }).json({
+      message: "You Logout Successfull",
+      success: true,
+    });
+  } catch (error) {
     return res.status(400).json({
-      message:"Failled To Logout ..",
-      resone:error.message,
+      message: "Failled To Logout ..",
+      resone: error.message,
     });
     console.log(error.message);
-    
   }
-}
+};
 
 const profileupdate = async (req, res) => {
   try {
@@ -163,7 +151,7 @@ const profileupdate = async (req, res) => {
     if (existUser && existUser._id.toString() !== userid) {
       return res.status(400).json({
         message: "Email already in use",
-        success: false
+        success: false,
       });
     }
 
@@ -177,7 +165,7 @@ const profileupdate = async (req, res) => {
     if (Array.isArray(skill)) {
       user.profile.skill = skill;
     } else {
-      user.profile.skill = skill.split(",").map(s => s.trim());
+      user.profile.skill = skill.split(",").map((s) => s.trim());
     }
 
     // Optional: save profile picture if uploaded
@@ -195,7 +183,7 @@ const profileupdate = async (req, res) => {
       email: user.email,
       phone_Number: user.phone_Number,
       role: user.role,
-      profile: user.profile
+      profile: user.profile,
     };
 
     return res.status(200).json({
@@ -203,7 +191,6 @@ const profileupdate = async (req, res) => {
       success: true,
       user: updatedUser,
     });
-
   } catch (error) {
     return res.status(500).json({
       message: `Profile Update Error: ${error.message}`,
@@ -211,4 +198,5 @@ const profileupdate = async (req, res) => {
     });
   }
 };
-module.exports={usersignup,userlogin,userlogout,profileupdate}; 
+module.exports = { usersignup, userlogin, userlogout, profileupdate };
+

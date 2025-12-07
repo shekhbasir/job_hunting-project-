@@ -1,6 +1,7 @@
 //here i am going to creating the schema for the jobs 
 
 const mongoose=require('mongoose');
+const company = require('./company');
 
 const Jobschema1=new mongoose.Schema({
   title:{
@@ -11,11 +12,11 @@ const Jobschema1=new mongoose.Schema({
     type:String,
     required:true,
   },
-  requirment:[{type:String}],
+  requirement:[{type:String}],
   salary:{type:Number},
   location:{type:String,required:true},
   job_Types:{type:String},
-  position:{type:Number,require:true},
+  position:{type:String,required:true},
   
 
   company:{
@@ -30,6 +31,8 @@ const Jobschema1=new mongoose.Schema({
     required:true,
 
   },
+
+  experience:{type:Number},
   application:[{
      type:mongoose.Schema.Types.ObjectId,
     ref:"application",

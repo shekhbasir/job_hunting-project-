@@ -167,3 +167,5 @@ module.exports = {
   updatecompany,
   deletetingcompany
 };
+
+//now i am going to making the job controller 

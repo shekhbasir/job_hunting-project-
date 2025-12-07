@@ -13,6 +13,10 @@ const {
   hamarupdatecompany,
   hamardeletecompany
 } = require('./routes/saracompany');
+const sarajobs=require('./routes/sarajobs');
+
+const saraapplication=require('./routes/saraapplication');
+
 
 
 app.use(express.json());
@@ -36,7 +40,11 @@ app.use(hamarsabcompany);
 app.use(hamarsinglecompany);
 app.use(hamarupdatecompany);
 app.use(hamardeletecompany);
-//now here i am simply going to calling this here and working simply and then it's will going to work
+
+//here i am going to using the single thing 
+app.use(sarajobs)
+app.use(saraapplication);
+
 const PORT=process.env.PORT||8000;
 app.listen(PORT,()=>{
 Dbconnect();
