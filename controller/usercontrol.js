@@ -6,7 +6,7 @@ const cookie=require
 
 const usersignup=async (req,res)=>{
   try{
-    //here sab se pahle sara data lewele 
+   
     const {fullname,email,phone_Number,password,role}=req.body;
     if(!fullname||!email||!phone_Number||!password||!role){
       return res.status(400).json({
@@ -15,7 +15,6 @@ const usersignup=async (req,res)=>{
       })
     }
 
-    //now i am checking it exist 
     const Existuser=await Userschema.findOne({email});
 
     if(Existuser){
@@ -25,11 +24,9 @@ const usersignup=async (req,res)=>{
       });
     };
 
-    //now i am going to hash the password and using this password simply 
 
     const hashpassword=await bcrypt.hash(password,10);
 
-    //now creating the new user
     const newUser=await Userschema.create({
       fullname:fullname,
       email:email,
@@ -37,15 +34,8 @@ const usersignup=async (req,res)=>{
       phone_Number:phone_Number,
       role:role
     })
-    return res.status(200).json({message:"You Signing the code Successfully ....",
-      userDetails:{
-        id:newUser._id,
-        name:newUser.fullname,
-        email:email,
-      password:hashpassword,
-      phone_Number:phone_Number,
-      role:role
-      }
+    return res.status(200).json({message:"Account Created Succesfully ..",
+    success:true
     });
 
 
@@ -55,59 +45,170 @@ const usersignup=async (req,res)=>{
   }
 }
 
+const userlogin = async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
 
-const userlogin=async (req,res) =>{
-  try{
-    const{email,password,role}=req.body;
-
-    if(!email|| !password||!role){
+    if (!email || !password || !role) {
       return res.status(400).json({
-        message:"Something is Missing ",
-        success:false,
-      })
-    };
+        message: "Something is missing",
+        success: false,
+      });
+    }
 
-    let user=await Userschema.findOne({email});
+    let user = await Userschema.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid Email",
+        success: false,
+      });
+    }
+
+    const matchpass = await bcrypt.compare(password, user.password);
+
+    if (!matchpass) {
+      return res.status(400).json({
+        message: "Password does not match",
+        success: false,
+      });
+    }
+
+    if (role !== user.role) {
+      return res.status(400).json({
+        message: "Role is not valid for this user",
+        success: false,
+      });
+    }
+
     user.password = undefined;
-    if(!user){
-      return res.status(400).json({
-        message:"Invalid Email..",
-        success:false,
-      })
+
+    const token = jwt.sign(
+      { userid: user._id },
+      process.env.SECRET_KEY,
+      { expiresIn: "2d" }
+    );
+
+    const userdata = {
+      userid: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phone_Number: user.phone_Number,
+      role: user.role,
     };
 
-    const matchpass=await bcrypt.compare(password,user.password);
-    if(!matchpass){
-      return res.status(400).json({message:"password not Match ..",success:false});
-    }
+    return res
+      .status(200)
+      .cookie("token", token, {
+        httpOnly: true,
+        maxAge: 1 * 24 * 60 * 60 * 1000,
+      })
+      .json({
+        message: `Welcome back ${user.fullname}`,
+        user: userdata,
+        success: true,
+      });
 
-    const token=jwt.sign({userid:user._id},process.env.SECRET_KEY,{expiresIn:"2d"})
+  } catch (error) {
+    console.log("Login error:", error.message);
+    return res.status(400).json({
+      message: `this is the error from login controller ${error.message}`,
+    });
+  }
+};
 
-    //now abb hamini ke simply apan jobs kar saktani san and by the help  of this
 
-    user={
-      userid:user._id,
-      fullname:user.fullname,
-      email:user.email,
-      phone_Number:user.phone_Number,
-      role:user.role
 
-    }
-
-    //now i am going to generating the cookies 
-
-    return res.status(200).cookie('token',token,{httpOnly:true,maxAge:1*24*60*60*1000}).json({message:`welcome back ${user.fullname}`,
-    user:user,success:true});
-
+const userlogout=async (req,res) =>{
+  try{
+    return res.status(200).cookie("token","",{maxAge:0}).json({
+      message:"You Logout Successfull",
+      success:true
+    })
 
   }catch(error){
-
-    // console.log("the error from the login ",error.message);
-    console.log("Signup error:", error.message);
-    return res.status(400).json({message:`this is the error from login controller ${error.message}`})
-
+    return res.status(400).json({
+      message:"Failled To Logout ..",
+      resone:error.message,
+    });
+    console.log(error.message);
+    
   }
 }
 
+const profileupdate = async (req, res) => {
+  try {
+    const { fullname, email, phone_Number, bio, skill } = req.body;
+    const file = req.file; // multer file
 
-module.exports={usersignup,userlogin}
+    if (!fullname || !email || !phone_Number || !bio || !skill) {
+      return res.status(400).json({
+        message: "There Is Something Missing ..",
+        success: false,
+      });
+    }
+
+    const userid = req.userid;
+
+    let user = await Userschema.findById(userid);
+    if (!user) {
+      return res.status(404).json({
+        message: "User Not Found",
+        success: false,
+      });
+    }
+
+    // Optional: check if new email is already used by another user
+    const existUser = await Userschema.findOne({ email });
+    if (existUser && existUser._id.toString() !== userid) {
+      return res.status(400).json({
+        message: "Email already in use",
+        success: false
+      });
+    }
+
+    // Update fields
+    user.fullname = fullname;
+    user.email = email;
+    user.phone_Number = phone_Number;
+
+    user.profile.bio = bio;
+
+    if (Array.isArray(skill)) {
+      user.profile.skill = skill;
+    } else {
+      user.profile.skill = skill.split(",").map(s => s.trim());
+    }
+
+    // Optional: save profile picture if uploaded
+    if (file) {
+      user.profile.photo = file.path; // adjust based on multer storage
+    }
+
+    await user.save();
+
+    user.password = undefined;
+
+    const updatedUser = {
+      userid: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phone_Number: user.phone_Number,
+      role: user.role,
+      profile: user.profile
+    };
+
+    return res.status(200).json({
+      message: "Profile Updated Successfully",
+      success: true,
+      user: updatedUser,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: `Profile Update Error: ${error.message}`,
+      success: false,
+    });
+  }
+};
+module.exports={usersignup,userlogin,userlogout,profileupdate}; 

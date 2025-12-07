@@ -1,6 +1,5 @@
 //here i am going to creating the schema for the jobs 
 
-const { application } = require('express');
 const mongoose=require('mongoose');
 
 const Jobschema1=new mongoose.Schema({
@@ -15,7 +14,7 @@ const Jobschema1=new mongoose.Schema({
   requirment:[{type:String}],
   salary:{type:Number},
   location:{type:String,required:true},
-  job_Types:{type:String,required:true},
+  job_Types:{type:String},
   position:{type:Number,require:true},
   
 
@@ -33,7 +32,7 @@ const Jobschema1=new mongoose.Schema({
   },
   application:[{
      type:mongoose.Schema.Types.ObjectId,
-    ref:"Application",
+    ref:"application",
   }]
 })
 

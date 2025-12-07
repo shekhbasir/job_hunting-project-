@@ -2,7 +2,7 @@
 const mongoose=require('mongoose');
 
 const companySchema1=new mongoose.Schema({
-  name:{
+  CompanyName:{
     type:String,
     unique:true,
     required:true
@@ -18,7 +18,6 @@ const companySchema1=new mongoose.Schema({
   },
   logo:{
     type:String,
-    required:true,
     default: ""
   },
   userId:{
